@@ -1,4 +1,4 @@
-const CACHE_NAME = 'philosophy-argument-trainer-v1';
+const CACHE_NAME = 'philosophy-argument-trainer-v2';
 const APP_ASSETS = [
   './',
   './index.html',
