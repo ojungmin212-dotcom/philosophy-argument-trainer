@@ -2,7 +2,7 @@ const CACHE_NAME = 'philosophy-argument-trainer-v2';
 const APP_ASSETS = [
   './',
   './index.html',
-  './styles.css',
+  './styles.css?v=20260617',
   './manifest.webmanifest',
   './favicon.svg',
   './src/app.js',
