@@ -1,26 +1,25 @@
-import { conceptCards, trainingPrompts } from './content.js';
+import { quoteStudies } from './content.js?v=20260618';
 import {
-  STEP_LABELS,
-  calculateGrowthStats,
-  createTrainingResult,
-  getDailyPrompt,
+  calculateStudyStats,
+  createStudyNote,
+  getDailyStudy,
   toDateKey,
-} from './training.js';
-import { loadResults, saveResults } from './storage.js';
+} from './training.js?v=20260618';
+import { loadResults, saveResults } from './storage.js?v=20260618';
 
 const state = {
   activeView: 'today',
   today: toDateKey(new Date()),
-  results: loadResults(),
+  notes: loadResults(),
 };
 
 const elements = {
   navButtons: [...document.querySelectorAll('.nav-button')],
   views: [...document.querySelectorAll('.view')],
   todayView: document.querySelector('#today-view'),
-  conceptsView: document.querySelector('#concepts-view'),
+  philosophersView: document.querySelector('#philosophers-view'),
   notesView: document.querySelector('#notes-view'),
-  growthView: document.querySelector('#growth-view'),
+  archiveView: document.querySelector('#archive-view'),
 };
 
 bindNavigation();
@@ -39,9 +38,9 @@ function bindNavigation() {
 function renderAll() {
   renderNavigation();
   renderToday();
-  renderConcepts();
+  renderPhilosophers();
   renderNotes();
-  renderGrowth();
+  renderArchive();
 }
 
 function renderNavigation() {
@@ -54,297 +53,322 @@ function renderNavigation() {
 }
 
 function renderToday() {
-  const prompt = getDailyPrompt(trainingPrompts, state.today);
-  const completedToday = state.results.find((result) => result.date === state.today);
+  const study = getDailyStudy(quoteStudies, state.today);
+  const note = state.notes.find((item) => item.date === state.today && item.studyId === study.id);
 
   elements.todayView.replaceChildren(
-    createPromptPanel(prompt),
-    completedToday ? createCompletedPanel(prompt, completedToday) : createTrainingForm(prompt),
+    createQuoteHero(study),
+    createResearchSections(study),
+    note ? createSavedStudyPanel(study, note) : createStudyNoteForm(study),
   );
 }
 
-function createPromptPanel(prompt) {
-  const panel = document.createElement('article');
-  panel.className = 'prompt-panel';
-  panel.innerHTML = `
+function createQuoteHero(study) {
+  const hero = document.createElement('article');
+  hero.className = 'prompt-panel quote-hero';
+  hero.innerHTML = `
     <div class="prompt-meta">
-      <span>${prompt.topic}</span>
-      <span>입문</span>
+      <span>${escapeHtml(study.philosopher)}</span>
+      <span>${escapeHtml(study.period)}</span>
       <span>${state.today}</span>
     </div>
-    <p class="argument-text">${escapeHtml(prompt.argumentText)}</p>
-    <div class="argument-map" aria-label="논증 구조 시각화">
+    <p class="quote-mark">“</p>
+    <p class="argument-text">${escapeHtml(study.quote)}</p>
+    <div class="quote-source">
+      <strong>${escapeHtml(study.theme)}</strong>
+      <span>${escapeHtml(study.source)}</span>
+    </div>
+    <div class="argument-map" aria-label="오늘의 연구 핵심">
       <div>
-        <strong>근거</strong>
-        <span>이유를 찾기</span>
+        <strong>핵심 질문</strong>
+        <span>${escapeHtml(study.coreQuestion)}</span>
       </div>
       <div>
-        <strong>전제</strong>
-        <span>숨은 가정 보기</span>
+        <strong>전통</strong>
+        <span>${escapeHtml(study.tradition)}</span>
       </div>
       <div>
-        <strong>결론</strong>
-        <span>핵심 주장 쓰기</span>
+        <strong>인물</strong>
+        <span>${escapeHtml(study.portraitTone)}</span>
       </div>
     </div>
   `;
-  return panel;
+  return hero;
 }
 
-function createTrainingForm(prompt) {
+function createResearchSections(study) {
+  const wrapper = document.createElement('section');
+  wrapper.className = 'research-layout';
+  wrapper.innerHTML = `
+    <article class="research-card">
+      <p class="eyebrow">Context</p>
+      <h3>사상적 배경</h3>
+      <p>${escapeHtml(study.background)}</p>
+    </article>
+    <article class="research-card major">
+      <p class="eyebrow">Deep Reading</p>
+      <h3>심층 해석</h3>
+      <p>${escapeHtml(study.deepReading)}</p>
+    </article>
+    <article class="research-card">
+      <p class="eyebrow">Tension</p>
+      <h3>숨은 긴장</h3>
+      <p>${escapeHtml(study.hiddenTension)}</p>
+    </article>
+    <article class="research-card">
+      <p class="eyebrow">Misreading</p>
+      <h3>오해하기 쉬운 지점</h3>
+      <p>${escapeHtml(study.misunderstanding)}</p>
+    </article>
+    <article class="research-card">
+      <p class="eyebrow">Opposition</p>
+      <h3>반대 입장</h3>
+      <p>${escapeHtml(study.opposingView)}</p>
+    </article>
+    <article class="research-card major">
+      <p class="eyebrow">Now</p>
+      <h3>오늘의 의미</h3>
+      <p>${escapeHtml(study.modernMeaning)}</p>
+    </article>
+    <article class="research-card prompt-list">
+      <p class="eyebrow">Questions</p>
+      <h3>연구 질문</h3>
+      <ul>
+        ${study.studyPrompts.map((prompt) => `<li>${escapeHtml(prompt)}</li>`).join('')}
+      </ul>
+    </article>
+    <article class="research-card keyword-card">
+      <p class="eyebrow">Terms</p>
+      <h3>핵심 개념</h3>
+      <div class="keyword-list">
+        ${study.keyTerms.map((term) => `<span>${escapeHtml(term)}</span>`).join('')}
+      </div>
+    </article>
+  `;
+  return wrapper;
+}
+
+function createStudyNoteForm(study) {
   const form = document.createElement('form');
-  form.className = 'training-form';
+  form.className = 'training-form study-form';
   form.innerHTML = `
     <section class="form-block">
-      <h3>1. 주장과 근거</h3>
+      <h3>1. 오늘의 핵심 이해</h3>
       <label>
-        핵심 주장
-        <input name="selectedClaim" type="text" required placeholder="이 논증이 최종적으로 말하려는 것" />
-      </label>
-      <label>
-        근거
-        <textarea name="selectedReasons" required rows="3" placeholder="주장을 지지하는 이유를 한 줄씩 적으세요."></textarea>
+        내가 붙잡은 핵심
+        <textarea name="keyInsight" required rows="4" placeholder="이 명언이 말하는 가장 깊은 뜻을 내 언어로 정리하세요."></textarea>
       </label>
     </section>
-
     <section class="form-block">
-      <h3>2. 숨은 전제와 약점</h3>
+      <h3>2. 동의와 반대</h3>
       <label>
-        숨은 전제
-        <textarea name="hiddenPremiseAnswer" required rows="3" placeholder="이 논증이 몰래 기대고 있는 가정"></textarea>
-      </label>
-      <label>
-        약점 또는 논리 오류
-        <textarea name="weaknessAnswer" required rows="3" placeholder="빠진 조건, 과장, 성급한 결론 등을 찾으세요."></textarea>
+        나의 입장
+        <textarea name="agreement" required rows="4" placeholder="어디에 동의하고, 어디에 걸리는지 적으세요."></textarea>
       </label>
     </section>
-
     <section class="form-block">
-      <h3>3. 반론과 내 입장</h3>
+      <h3>3. 삶에 적용</h3>
       <label>
-        반론 1개
-        <textarea name="counterargument" required rows="3" placeholder="상대 주장의 약점을 겨냥해 쓰세요."></textarea>
-      </label>
-      <label>
-        내 입장 3문장
-        <textarea name="position" required rows="4" placeholder="첫째 문장: 내 입장. 둘째 문장: 이유. 셋째 문장: 결론."></textarea>
+        오늘의 적용
+        <textarea name="application" required rows="4" placeholder="오늘 내 삶의 어떤 장면에 적용할 수 있나요?"></textarea>
       </label>
     </section>
-
-    <section class="score-panel" aria-label="단계별 자기 점수">
-      <h3>4. 자기 점수</h3>
-      <div class="score-grid">
-        ${Object.entries(STEP_LABELS).map(([key, label]) => createScoreControl(key, label)).join('')}
-      </div>
+    <section class="form-block">
+      <h3>4. 3문장 철학 에세이</h3>
+      <label>
+        짧은 에세이
+        <textarea name="essay" required rows="5" placeholder="첫 문장: 해석. 둘째 문장: 나의 입장. 셋째 문장: 삶의 적용."></textarea>
+      </label>
     </section>
-
-    <button class="primary-action" type="submit">훈련 저장</button>
+    <section class="score-panel">
+      <h3>오늘의 연구 깊이</h3>
+      <label class="score-control">
+        깊이 점수
+        <select name="depthScore">
+          <option value="5">5 오래 붙잡고 생각함</option>
+          <option value="4">4 꽤 깊게 이해함</option>
+          <option value="3" selected>3 핵심은 잡음</option>
+          <option value="2">2 아직 흐릿함</option>
+          <option value="1">1 다시 읽어야 함</option>
+        </select>
+      </label>
+    </section>
+    <button class="primary-action" type="submit">오늘의 연구 저장</button>
   `;
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     const formData = new FormData(form);
-    const stepScores = Object.fromEntries(
-      Object.keys(STEP_LABELS).map((key) => [key, Number(formData.get(key))]),
-    );
-
-    const result = createTrainingResult({
+    const note = createStudyNote({
       date: state.today,
-      promptId: prompt.id,
-      selectedClaim: formData.get('selectedClaim'),
-      selectedReasons: String(formData.get('selectedReasons'))
-        .split('\n')
-        .map((line) => line.trim())
-        .filter(Boolean),
-      hiddenPremiseAnswer: formData.get('hiddenPremiseAnswer'),
-      weaknessAnswer: formData.get('weaknessAnswer'),
-      counterargument: formData.get('counterargument'),
-      position: formData.get('position'),
-      stepScores,
+      studyId: study.id,
+      philosopher: study.philosopher,
+      keyInsight: formData.get('keyInsight'),
+      agreement: formData.get('agreement'),
+      application: formData.get('application'),
+      essay: formData.get('essay'),
+      depthScore: Number(formData.get('depthScore')),
     });
 
-    state.results = [...state.results.filter((item) => item.date !== state.today), result];
-    saveResults(state.results);
+    state.notes = [
+      ...state.notes.filter((item) => !(item.date === state.today && item.studyId === study.id)),
+      note,
+    ];
+    saveResults(state.notes);
     renderAll();
   });
 
   return form;
 }
 
-function createScoreControl(key, label) {
-  return `
-    <label class="score-control">
-      <span>${label}</span>
-      <select name="${key}">
-        <option value="5">5 매우 잘함</option>
-        <option value="4">4 잘함</option>
-        <option value="3" selected>3 보통</option>
-        <option value="2">2 어려움</option>
-        <option value="1">1 다시 학습</option>
-      </select>
-    </label>
-  `;
-}
-
-function createCompletedPanel(prompt, result) {
+function createSavedStudyPanel(study, note) {
   const panel = document.createElement('article');
   panel.className = 'completed-panel';
   panel.innerHTML = `
     <div class="result-header">
       <div>
-        <p class="eyebrow">Saved</p>
-        <h3>오늘 훈련 완료</h3>
+        <p class="eyebrow">Saved Study</p>
+        <h3>오늘의 연구 저장됨</h3>
       </div>
-      <strong>${result.selfScore.toFixed(2)} / 5</strong>
+      <strong>${note.depthScore} / 5</strong>
     </div>
     <div class="comparison-grid">
       <section>
-        <h4>모범 분석</h4>
+        <h4>오늘의 명언</h4>
         <dl>
-          <dt>주장</dt>
-          <dd>${escapeHtml(prompt.modelClaim)}</dd>
-          <dt>근거</dt>
-          <dd>${prompt.modelReasons.map(escapeHtml).join('<br />')}</dd>
-          <dt>숨은 전제</dt>
-          <dd>${escapeHtml(prompt.hiddenPremise)}</dd>
-          <dt>약점</dt>
-          <dd>${escapeHtml(prompt.weakness)}</dd>
-          <dt>예시 반론</dt>
-          <dd>${escapeHtml(prompt.sampleCounterargument)}</dd>
+          <dt>철학자</dt>
+          <dd>${escapeHtml(study.philosopher)}</dd>
+          <dt>명언</dt>
+          <dd>${escapeHtml(study.quote)}</dd>
+          <dt>출처</dt>
+          <dd>${escapeHtml(study.source)}</dd>
         </dl>
       </section>
       <section>
-        <h4>내 답변</h4>
+        <h4>내 연구 노트</h4>
         <dl>
-          <dt>주장</dt>
-          <dd>${escapeHtml(result.selectedClaim)}</dd>
-          <dt>근거</dt>
-          <dd>${result.selectedReasons.map(escapeHtml).join('<br />') || '입력 없음'}</dd>
-          <dt>숨은 전제</dt>
-          <dd>${escapeHtml(result.hiddenPremiseAnswer)}</dd>
-          <dt>반론</dt>
-          <dd>${escapeHtml(result.counterargument)}</dd>
-          <dt>입장</dt>
-          <dd>${escapeHtml(result.position)}</dd>
+          <dt>핵심 이해</dt>
+          <dd>${escapeHtml(note.keyInsight)}</dd>
+          <dt>나의 입장</dt>
+          <dd>${escapeHtml(note.agreement)}</dd>
+          <dt>삶에 적용</dt>
+          <dd>${escapeHtml(note.application)}</dd>
+          <dt>3문장 에세이</dt>
+          <dd>${escapeHtml(note.essay)}</dd>
         </dl>
       </section>
     </div>
-    <button class="secondary-action" type="button">오늘 답변 다시 작성</button>
+    <button class="secondary-action" type="button">오늘 연구 다시 작성</button>
   `;
 
   panel.querySelector('button').addEventListener('click', () => {
-    state.results = state.results.filter((item) => item.date !== state.today);
-    saveResults(state.results);
+    state.notes = state.notes.filter((item) => !(item.date === state.today && item.studyId === study.id));
+    saveResults(state.notes);
     renderAll();
   });
 
   return panel;
 }
 
-function renderConcepts() {
-  elements.conceptsView.replaceChildren(
-    ...conceptCards.map((card) => {
-      const article = document.createElement('article');
-      article.className = 'concept-card';
-      article.innerHTML = `
-        <p class="eyebrow">${escapeHtml(card.id)}</p>
-        <h3>${escapeHtml(card.title)}</h3>
-        <p>${escapeHtml(card.definition)}</p>
+function renderPhilosophers() {
+  elements.philosophersView.replaceChildren(
+    ...quoteStudies.map((study) => {
+      const card = document.createElement('article');
+      card.className = 'concept-card philosopher-card';
+      card.innerHTML = `
+        <p class="eyebrow">${escapeHtml(study.tradition)}</p>
+        <h3>${escapeHtml(study.philosopher)}</h3>
+        <p>${escapeHtml(study.portraitTone)}</p>
         <dl>
-          <dt>예시</dt>
-          <dd>${escapeHtml(card.example)}</dd>
-          <dt>주의</dt>
-          <dd>${escapeHtml(card.commonMistake)}</dd>
-          <dt>미니 퀴즈</dt>
-          <dd>${escapeHtml(card.quiz)}</dd>
-          <dt>답</dt>
-          <dd>${escapeHtml(card.answer)}</dd>
+          <dt>시대</dt>
+          <dd>${escapeHtml(study.period)}</dd>
+          <dt>대표 명언</dt>
+          <dd>${escapeHtml(study.quote)}</dd>
+          <dt>핵심 질문</dt>
+          <dd>${escapeHtml(study.coreQuestion)}</dd>
         </dl>
       `;
-      return article;
+      return card;
     }),
   );
 }
 
 function renderNotes() {
-  if (!state.results.length) {
-    elements.notesView.replaceChildren(createEmptyState('아직 저장된 논증 노트가 없습니다.'));
+  if (!state.notes.length) {
+    elements.notesView.replaceChildren(createEmptyState('아직 저장된 연구 노트가 없습니다.'));
     return;
   }
 
-  const promptById = new Map(trainingPrompts.map((prompt) => [prompt.id, prompt]));
+  const studyById = new Map(quoteStudies.map((study) => [study.id, study]));
   elements.notesView.replaceChildren(
-    ...[...state.results]
+    ...[...state.notes]
       .sort((a, b) => b.date.localeCompare(a.date))
-      .map((result) => {
-        const prompt = promptById.get(result.promptId);
-        const note = document.createElement('article');
-        note.className = 'note-card';
-        note.innerHTML = `
+      .map((note) => {
+        const study = studyById.get(note.studyId);
+        const card = document.createElement('article');
+        card.className = 'note-card';
+        card.innerHTML = `
           <div class="note-header">
-            <span>${escapeHtml(result.date)}</span>
-            <strong>${escapeHtml(prompt?.topic ?? '훈련')}</strong>
-            <span>${result.selfScore.toFixed(2)} / 5</span>
+            <span>${escapeHtml(note.date)}</span>
+            <strong>${escapeHtml(study?.philosopher ?? note.philosopher)}</strong>
+            <span>${note.depthScore} / 5</span>
           </div>
-          <p class="note-argument">${escapeHtml(prompt?.argumentText ?? '')}</p>
+          <p class="note-argument">${escapeHtml(study?.quote ?? '')}</p>
           <dl>
-            <dt>내가 찾은 주장</dt>
-            <dd>${escapeHtml(result.selectedClaim)}</dd>
-            <dt>내 반론</dt>
-            <dd>${escapeHtml(result.counterargument)}</dd>
-            <dt>내 입장</dt>
-            <dd>${escapeHtml(result.position)}</dd>
+            <dt>핵심 이해</dt>
+            <dd>${escapeHtml(note.keyInsight)}</dd>
+            <dt>나의 입장</dt>
+            <dd>${escapeHtml(note.agreement)}</dd>
+            <dt>3문장 에세이</dt>
+            <dd>${escapeHtml(note.essay)}</dd>
           </dl>
         `;
-        return note;
+        return card;
       }),
   );
 }
 
-function renderGrowth() {
-  const stats = calculateGrowthStats(state.results, state.today);
-  const growth = document.createElement('div');
-  growth.className = 'growth-layout';
-  growth.innerHTML = `
+function renderArchive() {
+  const stats = calculateStudyStats(state.notes, state.today);
+  const archive = document.createElement('div');
+  archive.className = 'growth-layout';
+  archive.innerHTML = `
     <div class="stat-grid">
       <article class="stat-card">
-        <span>연속 학습</span>
+        <span>연속 연구</span>
         <strong>${stats.streak}일</strong>
       </article>
       <article class="stat-card">
-        <span>완료 훈련</span>
-        <strong>${stats.completedCount}개</strong>
+        <span>완료 연구</span>
+        <strong>${stats.completedCount}건</strong>
       </article>
       <article class="stat-card">
-        <span>복습 대기</span>
-        <strong>${stats.reviewQueueCount}개</strong>
+        <span>만난 철학자</span>
+        <strong>${stats.philosopherCount}명</strong>
       </article>
       <article class="stat-card">
-        <span>가장 약한 영역</span>
-        <strong>${escapeHtml(stats.weakestArea.label)}</strong>
+        <span>평균 깊이</span>
+        <strong>${stats.averageDepth.toFixed(1)}</strong>
       </article>
     </div>
-    <article class="growth-panel">
-      <h3>최근 자기 점수</h3>
-      <div class="score-bars">
-        ${
-          stats.recentScores.length
-            ? stats.recentScores
-                .map(
-                  (score) => `
-                    <div class="score-bar">
-                      <span style="height: ${Math.max(8, score * 18)}%"></span>
-                      <strong>${score.toFixed(1)}</strong>
-                    </div>
-                  `,
-                )
-                .join('')
-            : '<p class="empty-copy">훈련을 완료하면 점수가 표시됩니다.</p>'
-        }
+    <article class="growth-panel archive-panel">
+      <h3>명언 전체 목록</h3>
+      <div class="archive-list">
+        ${quoteStudies
+          .map(
+            (study) => `
+              <section>
+                <strong>${escapeHtml(study.philosopher)}</strong>
+                <p>${escapeHtml(study.quote)}</p>
+                <span>${escapeHtml(study.source)}</span>
+              </section>
+            `,
+          )
+          .join('')}
       </div>
     </article>
   `;
-  elements.growthView.replaceChildren(growth);
+  elements.archiveView.replaceChildren(archive);
 }
 
 function createEmptyState(message) {

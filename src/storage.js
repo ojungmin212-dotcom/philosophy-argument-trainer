@@ -1,4 +1,4 @@
-export const RESULTS_KEY = 'philosophyArgumentTrainer.results';
+export const RESULTS_KEY = 'philosophyQuoteStudy.notes';
 
 export function loadResults(store = globalThis.localStorage) {
   try {

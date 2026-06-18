@@ -1,71 +1,41 @@
-export const STEP_LABELS = {
-  claim: '주장 찾기',
-  reasons: '근거 찾기',
-  hiddenPremise: '숨은 전제',
-  weakness: '약점 찾기',
-  counterargument: '반론 작성',
-  position: '입장 정리',
-};
-
-export function getDailyPrompt(prompts, dateString = toDateKey(new Date())) {
-  if (!Array.isArray(prompts) || prompts.length === 0) {
-    throw new Error('훈련 문항이 없습니다.');
+export function getDailyStudy(studies, dateString = toDateKey(new Date())) {
+  if (!Array.isArray(studies) || studies.length === 0) {
+    throw new Error('연구할 명언이 없습니다.');
   }
 
   const hash = [...dateString].reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  return prompts[hash % prompts.length];
+  return studies[hash % studies.length];
 }
 
-export function createTrainingResult(input) {
+export function createStudyNote(input) {
   const date = input.date ?? toDateKey(new Date());
-  const stepScores = normalizeStepScores(input.stepScores);
-  const selfScore = roundToTwo(average(Object.values(stepScores)));
+  const depthScore = clampScore(Number(input.depthScore ?? 3));
 
   return {
     date,
-    promptId: input.promptId,
-    selectedClaim: input.selectedClaim ?? '',
-    selectedReasons: input.selectedReasons ?? [],
-    hiddenPremiseAnswer: input.hiddenPremiseAnswer ?? '',
-    weaknessAnswer: input.weaknessAnswer ?? '',
-    counterargument: input.counterargument ?? '',
-    position: input.position ?? '',
-    selfScore,
-    stepScores,
-    reviewDueDate: addDays(date, 3),
+    studyId: input.studyId,
+    philosopher: input.philosopher ?? '',
+    keyInsight: input.keyInsight ?? '',
+    agreement: input.agreement ?? '',
+    application: input.application ?? '',
+    essay: input.essay ?? '',
+    depthScore,
+    reviewDueDate: addDays(date, 7),
   };
 }
 
-export function calculateGrowthStats(results, today = toDateKey(new Date())) {
-  const sortedResults = [...results].sort((a, b) => a.date.localeCompare(b.date));
-  const scoreTotals = createEmptyScoreBuckets();
-
-  sortedResults.forEach((result) => {
-    Object.entries(normalizeStepScores(result.stepScores)).forEach(([key, score]) => {
-      scoreTotals[key].total += score;
-      scoreTotals[key].count += 1;
-    });
-  });
-
-  const weakestArea = Object.entries(scoreTotals)
-    .map(([key, value]) => ({
-      key,
-      label: STEP_LABELS[key],
-      average: value.count ? roundToTwo(value.total / value.count) : 0,
-    }))
-    .filter((area) => area.average > 0)
-    .sort((a, b) => a.average - b.average)[0] ?? {
-    key: 'none',
-    label: '아직 데이터 없음',
-    average: 0,
-  };
+export function calculateStudyStats(notes, today = toDateKey(new Date())) {
+  const sortedNotes = [...notes].sort((a, b) => a.date.localeCompare(b.date));
+  const philosophers = new Set(sortedNotes.map((note) => note.philosopher).filter(Boolean));
+  const depthScores = sortedNotes.map((note) => Number(note.depthScore)).filter((score) => !Number.isNaN(score));
 
   return {
-    completedCount: sortedResults.length,
-    streak: calculateBestStreak(sortedResults.map((result) => result.date)),
-    recentScores: sortedResults.slice(-5).map((result) => result.selfScore),
-    weakestArea,
-    reviewQueueCount: sortedResults.filter((result) => result.reviewDueDate <= today).length,
+    completedCount: sortedNotes.length,
+    philosopherCount: philosophers.size,
+    streak: calculateBestStreak(sortedNotes.map((note) => note.date)),
+    averageDepth: depthScores.length ? roundToTwo(average(depthScores)) : 0,
+    reviewQueueCount: sortedNotes.filter((note) => note.reviewDueDate <= today).length,
+    recentNotes: sortedNotes.slice(-5).reverse(),
   };
 }
 
@@ -77,19 +47,9 @@ export function toDateKey(date) {
   return `${year}-${month}-${day}`;
 }
 
-function normalizeStepScores(scores = {}) {
-  return Object.fromEntries(
-    Object.keys(STEP_LABELS).map((key) => [key, clampScore(Number(scores[key] ?? 3))]),
-  );
-}
-
 function clampScore(score) {
   if (Number.isNaN(score)) return 3;
   return Math.min(5, Math.max(1, score));
-}
-
-function createEmptyScoreBuckets() {
-  return Object.fromEntries(Object.keys(STEP_LABELS).map((key) => [key, { total: 0, count: 0 }]));
 }
 
 function calculateBestStreak(dateStrings) {

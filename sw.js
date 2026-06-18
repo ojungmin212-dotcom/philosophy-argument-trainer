@@ -1,14 +1,14 @@
-const CACHE_NAME = 'philosophy-argument-trainer-v2';
+const CACHE_NAME = 'philosophy-quote-study-v1';
 const APP_ASSETS = [
   './',
   './index.html',
-  './styles.css?v=20260617',
+  './styles.css?v=20260618',
   './manifest.webmanifest',
   './favicon.svg',
-  './src/app.js',
-  './src/content.js',
-  './src/storage.js',
-  './src/training.js',
+  './src/app.js?v=20260618',
+  './src/content.js?v=20260618',
+  './src/storage.js?v=20260618',
+  './src/training.js?v=20260618',
 ];
 
 self.addEventListener('install', (event) => {

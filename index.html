@@ -6,13 +6,13 @@
     <meta name="theme-color" content="#f5f5f7" />
     <meta
       name="description"
-      content="초급자를 위한 20분 철학 논증 훈련 웹앱"
+      content="하루 한 명언으로 철학자의 사상을 깊게 연구하는 웹앱"
     />
-    <title>철학 논증 훈련</title>
+    <title>오늘의 철학 연구실</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=20260617" />
-    <script type="module" src="./src/app.js"></script>
+    <link rel="stylesheet" href="./styles.css?v=20260618" />
+    <script type="module" src="./src/app.js?v=20260618"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -20,16 +20,16 @@
         <div class="brand">
           <span class="brand-mark" aria-hidden="true">∴</span>
           <div>
-            <p>20분 훈련</p>
-            <h1>철학 논증</h1>
+            <p>Daily Study</p>
+            <h1>철학 연구실</h1>
           </div>
         </div>
 
         <nav class="nav-tabs" aria-label="주요 화면">
-          <button class="nav-button active" type="button" data-view="today">오늘</button>
-          <button class="nav-button" type="button" data-view="concepts">개념</button>
+          <button class="nav-button active" type="button" data-view="today">오늘의 연구</button>
+          <button class="nav-button" type="button" data-view="philosophers">철학자</button>
           <button class="nav-button" type="button" data-view="notes">노트</button>
-          <button class="nav-button" type="button" data-view="growth">성장</button>
+          <button class="nav-button" type="button" data-view="archive">아카이브</button>
         </nav>
       </aside>
 
@@ -37,33 +37,33 @@
         <section class="view active" id="view-today" aria-labelledby="today-title">
           <div class="section-heading">
             <p class="eyebrow">Today</p>
-            <h2 id="today-title">오늘의 20분 논증 훈련</h2>
+            <h2 id="today-title">오늘의 철학 명언 연구</h2>
           </div>
           <div id="today-view"></div>
         </section>
 
-        <section class="view" id="view-concepts" aria-labelledby="concepts-title">
+        <section class="view" id="view-philosophers" aria-labelledby="philosophers-title">
           <div class="section-heading">
-            <p class="eyebrow">Concepts</p>
-            <h2 id="concepts-title">개념 카드</h2>
+            <p class="eyebrow">Philosophers</p>
+            <h2 id="philosophers-title">철학자 연구 지도</h2>
           </div>
-          <div id="concepts-view" class="concept-grid"></div>
+          <div id="philosophers-view" class="concept-grid"></div>
         </section>
 
         <section class="view" id="view-notes" aria-labelledby="notes-title">
           <div class="section-heading">
             <p class="eyebrow">Notes</p>
-            <h2 id="notes-title">논증 노트</h2>
+            <h2 id="notes-title">나의 연구 노트</h2>
           </div>
           <div id="notes-view" class="notes-list"></div>
         </section>
 
-        <section class="view" id="view-growth" aria-labelledby="growth-title">
+        <section class="view" id="view-archive" aria-labelledby="archive-title">
           <div class="section-heading">
-            <p class="eyebrow">Growth</p>
-            <h2 id="growth-title">성장 대시보드</h2>
+            <p class="eyebrow">Archive</p>
+            <h2 id="archive-title">명언 아카이브</h2>
           </div>
-          <div id="growth-view"></div>
+          <div id="archive-view"></div>
         </section>
       </main>
     </div>

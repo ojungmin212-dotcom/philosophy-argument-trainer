@@ -1,11 +1,19 @@
-# 철학 논증 훈련
+# 오늘의 철학 연구실
 
-초급자를 위한 20분 철학 논증 훈련 웹앱입니다.
+하루에 하나의 유명 철학자 명언을 붙잡고 깊게 연구하는 정적 웹앱입니다.
+
+## 구성
+
+- 오늘의 명언과 출처
+- 철학자와 시대적 배경
+- 문장 해부와 심층 해석
+- 반대 입장과 현대적 의미
+- 나의 연구 노트
+- 명언 아카이브
 
 ## 실행
 
 ```bash
-cd philosophy-argument-trainer
 python3 -m http.server 8002
 ```
 
@@ -14,8 +22,5 @@ python3 -m http.server 8002
 ## 테스트
 
 ```bash
-cd philosophy-argument-trainer
 npm test
 ```
-
-테스트는 순수 학습 로직과 저장소 어댑터를 검증합니다.
